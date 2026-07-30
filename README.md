@@ -1,0 +1,244 @@
+# AI Coding Agent
+
+A command-line AI coding agent built in Python using the OpenAI SDK and OpenRouter.
+
+The agent can inspect a restricted project directory, read and write files, run Python programs, execute tests, and iteratively use tool results to complete coding tasks.
+
+This project was created as part of the Boot.dev AI Agent course.
+
+## Features
+
+The agent can:
+
+* List files and directories
+* Read file contents
+* Create or overwrite files
+* Execute Python files with optional command-line arguments
+* Capture standard output, standard error, and exit codes
+* Iterate through multiple tool calls
+* Maintain conversation history between model calls
+* Diagnose, modify, and verify Python code
+* Restrict file operations to a permitted working directory
+* Limit Python subprocesses to a 30-second timeout
+* Display token usage with the `--verbose` flag
+
+## How It Works
+
+The application uses an agent loop:
+
+1. The user provides a coding task.
+2. The request is sent to an LLM with descriptions of the available tools.
+3. The model selects a tool and provides its arguments.
+4. The Python application validates and executes the requested function.
+5. The tool result is added to the conversation history.
+6. The model reviews the result and decides what to do next.
+7. The loop continues until the model returns a final response or reaches the iteration limit.
+
+The LLM does not execute functions directly. It requests tool calls, while the Python application remains responsible for validating and executing them.
+
+## Available Tools
+
+### `get_files_info`
+
+Lists files and directories inside the permitted working directory.
+
+For each item, it returns:
+
+* File name
+* File size
+* Whether the item is a directory
+
+### `get_file_content`
+
+Reads a file inside the permitted working directory.
+
+To reduce excessive token consumption, file output is limited to a configured maximum number of characters.
+
+### `write_file`
+
+Creates or overwrites a file inside the permitted working directory.
+
+Missing parent directories are created automatically.
+
+### `run_python_file`
+
+Runs a Python file inside the permitted working directory.
+
+The function:
+
+* Accepts optional command-line arguments
+* Captures standard output and standard error
+* Reports non-zero exit codes
+* Uses a 30-second timeout
+
+## Project Structure
+
+```text
+ai-agent/
+├── calculator/
+│   ├── main.py
+│   ├── tests.py
+│   └── pkg/
+│       ├── calculator.py
+│       └── render.py
+├── functions/
+│   ├── __init__.py
+│   ├── get_file_content.py
+│   ├── get_files_info.py
+│   ├── run_python_file.py
+│   └── write_file.py
+├── .env.example
+├── .gitignore
+├── call_function.py
+├── config.py
+├── main.py
+├── prompts.py
+├── pyproject.toml
+├── uv.lock
+└── README.md
+```
+
+## Requirements
+
+* Python 3.12 or later
+* [`uv`](https://docs.astral.sh/uv/)
+* An OpenRouter API key
+
+## Installation
+
+Clone the repository:
+
+```bash
+git clone https://github.com/cyberbotsaber/ai-agent.git
+cd ai-agent
+```
+
+Install the dependencies:
+
+```bash
+uv sync
+```
+
+Create your environment file:
+
+```bash
+cp .env.example .env
+```
+
+Open `.env` and add your OpenRouter API key:
+
+```env
+OPENROUTER_API_KEY=your_real_api_key_here
+```
+
+Never commit the `.env` file.
+
+## Usage
+
+Run the agent with a prompt:
+
+```bash
+uv run main.py "Explain how the calculator renders results to the console."
+```
+
+Enable verbose output:
+
+```bash
+uv run main.py \
+  "Explain how the calculator renders results to the console." \
+  --verbose
+```
+
+Verbose mode displays:
+
+* The user prompt
+* Prompt-token usage
+* Response-token usage
+* Tool names and arguments
+* Tool execution results
+
+## Example Coding Task
+
+The sample calculator project can be used to test the agent:
+
+```bash
+uv run main.py \
+  "Fix the bug: 3 + 7 * 2 shouldn't be 20." \
+  --verbose
+```
+
+The agent can inspect the files, identify an incorrect operator-precedence value, modify the relevant code, and run the calculator tests to verify the fix.
+
+Run the calculator manually:
+
+```bash
+uv run calculator/main.py "3 + 7 * 2"
+```
+
+Expected output:
+
+```json
+{
+  "expression": "3 + 7 * 2",
+  "result": 17
+}
+```
+
+Run the calculator test suite:
+
+```bash
+uv run calculator/tests.py
+```
+
+## Security Warning
+
+This project is a learning exercise, not a production-ready autonomous agent.
+
+The agent can execute arbitrary Python code located inside its permitted working directory. Basic safeguards include:
+
+* Working-directory path validation
+* Prevention of ordinary `../` directory escapes
+* A 30-second subprocess timeout
+* A maximum agent-loop iteration count
+* API keys stored outside the repository
+
+These controls are not a complete sandbox.
+
+Do not expose this application as a public service or allow untrusted users to control its prompts, files, or execution environment.
+
+## Limitations
+
+* Tool arguments generated by an LLM may occasionally contain malformed JSON.
+* Free OpenRouter models may behave inconsistently.
+* OpenRouter free-tier requests are rate-limited.
+* The agent may perform unnecessary tool calls.
+* File-writing operations overwrite existing content.
+* The path checks do not constitute a hardened operating-system sandbox.
+* The agent currently supports Python execution only.
+
+## Possible Improvements
+
+Future improvements could include:
+
+* Structured logging
+* Automated unit tests for agent tools
+* More precise type definitions for messages and tool calls
+* Safer file-editing operations
+* Patch-based editing instead of full-file overwrites
+* User confirmation before destructive changes
+* Docker or operating-system-level sandboxing
+* Configurable working directories
+* Retry handling for API and rate-limit errors
+* Token and cost budgets
+* Better loop-completion detection
+* Support for additional programming languages
+
+## License
+
+This project is provided for educational purposes.
+
+Add a license file before distributing or reusing it as an open-source project.
+
+## Author
+
+Created by [cyberbotsaber](https://github.com/cyberbotsaber).
