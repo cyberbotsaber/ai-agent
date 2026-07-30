@@ -21,6 +21,10 @@ from functions.search_files import (
     schema_search_files,
     search_files,
 )
+from functions.run_command import (
+    run_command,
+    schema_run_command,
+)
 
 available_functions = [
     schema_get_files_info,
@@ -28,6 +32,7 @@ available_functions = [
     schema_run_python_file,
     schema_write_file,
     schema_search_files,
+    schema_run_command
 ]
 
 
@@ -37,6 +42,7 @@ function_map: dict[str, Callable[..., str]] = {
     "run_python_file": run_python_file,
     "write_file": write_file,
     "search_files": search_files,
+    "run_command": run_command,
 }
 
 
