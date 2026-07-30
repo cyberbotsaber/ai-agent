@@ -17,13 +17,17 @@ from functions.write_file import (
     schema_write_file,
     write_file,
 )
-
+from functions.search_files import (
+    schema_search_files,
+    search_files,
+)
 
 available_functions = [
     schema_get_files_info,
     schema_get_file_content,
     schema_run_python_file,
     schema_write_file,
+    schema_search_files,
 ]
 
 
@@ -32,10 +36,11 @@ function_map: dict[str, Callable[..., str]] = {
     "get_file_content": get_file_content,
     "run_python_file": run_python_file,
     "write_file": write_file,
+    "search_files": search_files,
 }
 
 
-def call_function(tool_call, verbose: bool = False) -> dict:
+def call_function(tool_call, working_directory: str, verbose: bool = False) -> dict:
     function_name = tool_call.function.name
     raw_arguments = tool_call.function.arguments or "{}"
 
@@ -80,8 +85,8 @@ def call_function(tool_call, verbose: bool = False) -> dict:
             "content": f"Error: Unknown function: {function_name}",
         }
 
-    # Injected here so the model cannot choose another working directory.
-    function_args["working_directory"] = "./calculator"
+    # Sets working directory
+    function_args["working_directory"] = working_directory
 
     try:
         result = function_to_call(**function_args)
